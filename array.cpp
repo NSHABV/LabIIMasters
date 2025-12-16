@@ -78,40 +78,41 @@ int Array<T>::insert(int index, const T& value) {
         auto relocData = static_cast<T*>(malloc(capacity * typeSize));
         if (std::is_move_constructible<T>::value == true) {
             for (auto i = 0; i < index; i++) {
-                relocData[i] = std::move(data[i]);
+                new (&relocData[i]) T(std::move(data[i]));
             }
-            relocData[index] = std::move(value);
+            new (&relocData[index]) T(value);
             for (auto i = index; i < currCount; i++) {
-                relocData[i + 1] = std::move(data[i]);
+                new (&relocData[i + 1]) T(std::move(data[i]));
             }
-            free(data);
-            data = (T *)relocData;
         }
         else {
             for (auto i = 0; i < index; i++) {
-                relocData[i] = data[i];
+                new (&relocData[i]) T(data[i]);
             }
-            relocData[index] = value;
+            new (&relocData[index]) T(value);
             for (auto i = index; i < currCount; i++) {
-                relocData[i + 1] = data[i];
+                new (&relocData[i + 1]) T(data[i]);
             }
-            free(data);
-            data = (T *)relocData;
         }
+
+        for (auto i = 0; i < currCount; i++) {
+            data[i].~T();
+        }
+        free(data);
+        data = relocData;
     }
     else {
         if (std::is_move_assignable<T>::value == true && std::is_move_constructible<T>::value == true) {
             for (auto i = currCount - 1; i > index; i--) {
-                data[i + 1] = std::move(data[i]);
+                new (&data[i + 1]) T(std::move(data[i]));
             }
-            data[index] = std::move(value);
         }
         else {
             for (auto i = currCount - 1; i > index; i++) {
-                data[i + 1] = data[i];
+                new (&data[i + 1]) T(data[i]);
             }
-            data[index] = value;
         }
+        new (&relocData[index]) T(value);
     }
     currCount++;
     return index;
@@ -129,6 +130,8 @@ void Array<T>::remove(int index) {
             data[i] = data[i + 1];
         }
     }
+    data[index].~T();
+    data[index] = nullptr;
     currCount--;
 }
 
@@ -161,7 +164,6 @@ template<typename T>
 const T &Array<T>::operator[](int index) const {
     return data[index];
 }
-
 
 template<typename T>
 const T& Array<T>::Iterator::get() const {
@@ -247,4 +249,3 @@ void swap(vector& other) noexcept {
     swap(size_, other.size_);
     swap(capacity_, other.capacity_);
 }
-
