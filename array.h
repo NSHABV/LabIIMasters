@@ -16,6 +16,22 @@ public:
 
     int size() const;
 
+    class Iterator {
+    public:
+        Iterator(T *ptr);
+
+        const T& get() const; // Получает значение массива в текущей позиции итератора.
+        void set(const T& value); // Устанавливает значение в текущей позиции итератора.
+        void next(); //Перемещает текущую позицию итератора на следующий элемент.
+        bool hasNext() const; //Возвращает true, если итератор может перейти к следующему элементу, или false в противном случае.
+    private:
+        T *m_dataPtr;
+        Iterator(T *ptr, bool isReverse);
+
+        bool m_isReverse;
+    };
+    using ConstIterator = const Iterator;
+
     Iterator iterator();
     ConstIterator iterator() const;
 
